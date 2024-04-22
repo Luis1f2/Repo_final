@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import styles from "./styles.module.css";
+
 
 const Login2 = () => {
     const [data, setData] = useState({ username: "", password: "" });
     const [error, setError] = useState("");
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
     const handleChange = ({ target: { name, value } }) => {
         setData(prevData => ({ ...prevData, [name]: value }));

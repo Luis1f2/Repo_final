@@ -1,112 +1,81 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import '../AddMusic/AddMusic.scss';
-import { Add, Image, MusicNoteTwoTone } from "@material-ui/icons";
 import { Button } from "@material-ui/core";
+import { Add, Image, MusicNoteTwoTone } from "@material-ui/icons";
+import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../../../api/Theme";
 import musicDB from "../../../db/music";
 
 function AddMusic() {
-    const useStyle = useContext(ThemeContext);
-    const fileRef = useRef();
-    const [selected, setSelected] = useState(null);
+    const style = useContext(ThemeContext);
+    const imageRef = useRef();
+    const musicRef = useRef();
     const navigate = useNavigate();
-    const selectImg = () => {
-        fileRef.current.click()
-    }
-    useEffect(() => {
-        fileRef.current.onchange = (e) => {
-            setSelected(e.target.files[0].name)
-        }
-    })
-    let id = musicDB[musicDB.length - 1].id + 1;
-
-    const handleAddMusic = async () => {
-        const name = document.getElementById("name").value;
-        const artist = document.getElementById("artist").value;
-        const language = document.getElementById("language").value;
+    const [music, setMusic] = useState({imagePreview: '', musicPreview: '', name: '', artist: '', language: '0'});
     
-        const data = {
-            src: selected, // Supongo que 'selected' contiene la ruta al archivo de audio seleccionado
-            name,
-            artist,
-            language
+    const handleFileChange = (type) => (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setMusic(prev => ({ ...prev, [type]: reader.result }));
         };
-    
-        // Imprimir el token en consola
-        const token = localStorage.getItem("token");
-        console.log("Token:", token);
-    
+        reader.readAsDataURL(file);
+    };
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        const { imagePreview, musicPreview, name, artist, language } = music;
+        
+        if (!name || !artist || language === '0') {
+            alert('Please fill all fields and select language');
+            return;
+        }
+
         try {
             const response = await fetch('http://localhost:3030/api/V3/song/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-access-token': token // Agrega el token al encabezado
+                    'Authorization': `Bearer ${localStorage.getItem("token")}`
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify({ name, artist, language, image: imagePreview, music: musicPreview })
             });
-    
-            if (response.ok) {
-                navigate('/home');
-            } else {
-                throw new Error('Error al agregar la canción');
-            }
-        } catch (error) {
-            console.error(error);
-        }
-    }
-    
 
+            if (!response.ok) throw new Error('Failed to upload song');
+            alert('Song added successfully');
+            navigate('/home');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error uploading song');
+        }
+    };
 
     return (
-        <form style={useStyle.component} className={"AddMusic"}>
-            <div className="add-music-sub-container">
-                <div className="d1">
-                    <Button onClick={selectImage} style={{ backgroundColor: useStyle.subTheme, width: "200px", height: "200px" }} variant={"contained"} >
-                        {imagePreview ? (
-                            <img src={imagePreview} alt="Music Cover" style={{ width: "100%", height: "100%" }} />
-                        ) : (
-                            <Image titleAccess={"Select a music cover"} style={{ color: "#f0f0f0", width: "150px", height: "150px" }} />
-                        )}
-                    </Button>
-                    <input ref={imageRef} accept="image/*" type="file" hidden id={"music-img"} />
-                    <Button onClick={selectMusic} style={{ backgroundColor: useStyle.subTheme, width: "200px", height: "200px" }} variant={"contained"} >
-                        <MusicNoteTwoTone titleAccess={"Select a music"} style={{ color: "#f0f0f0", width: "150px", height: "150px" }} />
-                    </Button>
-                    <input ref={musicRef} accept="audio/*" type="file" hidden />
-                    {musicPreview && (
-                        <audio controls src={musicPreview} style={{ marginTop: '20px' }}>
-                            Su navegador no soporta el elemento de audio.
-                        </audio>
-                    )}
-                    <select onChange={(e) => setLanguage(e.target.value)}>
-                        <option value="0">Selecciona el lenguaje</option>
-                        <option value="1">Español</option>
-                        <option value="2">Ingles</option>
-                    </select>
-                </div>
-                <div className="d2">
-                    <div>
-                        <input type="text" value={"ID: " + id} disabled />
-                        <input type="text" placeholder={"Nombre"} id={"name"} onChange={(e) => setNameMusic(e.target.value)} />
-                        <input type="text" placeholder={"Nombre del cantante"} id={"artist"} onChange={(e) => setNameSinger(e.target.value)} />
-                        <Button style={{ backgroundColor: useStyle.theme }} variant={"contained"} endIcon={<Add />} onClick={addMusic}>
-                            Agregar
-                        </Button>
-                    </div>
-                    <div className={"preview"}>
-                        <h3>Vista previa</h3>
-                        {selectedImage && <p>Imagen : {selectedImage}</p>}
-                        {selectedMusic && <p>Música : {selectedMusic}</p>}
-                        <p>Nombre de la música : {nameMusic}</p>
-                        <p>Nombre del cantante : {nameSinger}</p>
-                        <p>Lenguaje : {language === "0" ? "Selecciona el lenguaje" : language === "1" ? "Español" : "Inglés"}</p>
-                    </div>
-                </div>
-            </div>
-        </form>
+        <div style={style.component} className="AddMusic">
+            <form onSubmit={handleSubmit}>
+                <Button component="label" style={{backgroundColor: style.subTheme}}>
+                    Upload Image
+                    <input type="file" hidden onChange={handleFileChange('imagePreview')} accept="image/*" />
+                </Button>
+                <Button component="label" style={{backgroundColor: style.subTheme}}>
+                    Upload Music
+                    <input type="file" hidden onChange={handleFileChange('musicPreview')} accept="audio/*" />
+                </Button>
+                <input placeholder="Name" value={music.name} onChange={e => setMusic({...music, name: e.target.value})} />
+                <input placeholder="Artist" value={music.artist} onChange={e => setMusic({...music, artist: e.target.value})} />
+                <select value={music.language} onChange={e => setMusic({...music, language: e.target.value})}>
+                    <option value="0">Select Language</option>
+                    <option value="1">English</option>
+                    <option value="2">Spanish</option>
+                </select>
+                <Button type="submit">Submit</Button>
+            </form>
+            {music.imagePreview && <img src={music.imagePreview} alt="Preview" />}
+            {music.musicPreview && <audio controls src={music.musicPreview} />}
+        </div>
     );
 }
 
 export default AddMusic;
-
