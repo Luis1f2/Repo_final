@@ -3,32 +3,41 @@ import { Link } from "react-router-dom";
 import styles from "./styles.module.css";
 
 const Login2 = () => {
-    const [data, setData] = useState({ email: "", password: "" });
+    const [data, setData] = useState({ username: "", password: "" });
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
-    const handleChange = ({ currentTarget: input }) => {
-        setData({ ...data, [input.name]: input.value });
+    const handleChange = ({ target: { name, value } }) => {
+        setData(prevData => ({ ...prevData, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const { email, password } = data;
+        const { username, password } = data;
 
-        const userDataString = localStorage.getItem("userData");
-        if (userDataString) {
-            const userData = JSON.parse(userDataString);
-            
-      
-            if (email === userData.email && password === userData.password) {
-                
-                window.location = "/home";
-            } else {
-                setError("Correo electrónico o contraseña incorrectos");
+        try {
+            const response = await fetch('http://localhost:3030/api/V3/auth/signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ user_name: username, password })
+            });
+
+            if (!response.ok) {
+                throw new Error('Nombre de usuario o contraseña no válidos');
             }
-        } else {
-            setError("Usuario no encontrado. Por favor, regístrate primero.");
+
+            const { accessToken } = await response.json();
+            console.log("Token recibido:", accessToken); 
+            localStorage.setItem("token", accessToken);
+            navigate("/home");
+        } catch (error) {
+            console.error(error);
+            setError("Nombre de usuario o contraseña no válidos");
         }
     };
+
 
     return (
         <div className={styles.login_container}>

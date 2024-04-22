@@ -7,54 +7,56 @@ import musicDB from "../../../db/music";
 
 function AddMusic() {
     const useStyle = useContext(ThemeContext);
-    const imageRef = useRef();
-    const musicRef = useRef(); 
-    const [selectedImage, setSelectedImage] = useState(null); 
-    const [selectedMusic, setSelectedMusic] = useState(null); 
-    const [nameMusic, setNameMusic] = useState("");
-    const [nameSinger, setNameSinger] = useState("");
-    const [language, setLanguage] = useState("0");
-    const [imagePreview, setImagePreview] = useState(""); 
-    const [musicPreview, setMusicPreview] = useState("");
-
-    const selectImage = () => {
-        imageRef.current.click();
-    };
-
-    const selectMusic = () => {
-        musicRef.current.click();
-    };
-
-       const addMusic = () => {
-        const newMusic = {
-            id: musicDB.length,
-            name: nameMusic,
-            author_name: nameSinger,
-            img: selectedImage,
-            lang: language === "1" ? "Español" : "Ingles",
-            timesPlayed: 0,
-            type: "custom",
-            musicName: selectedMusic,
-        };
-        musicDB.push(newMusic);
-    };
-
+    const fileRef = useRef();
+    const [selected, setSelected] = useState(null);
+    const navigate = useNavigate();
+    const selectImg = () => {
+        fileRef.current.click()
+    }
     useEffect(() => {
-        imageRef.current.onchange = (e) => {
-            setSelectedImage(e.target.files[0].name);
-            const file = e.target.files[0];
-            const url = URL.createObjectURL(file);
-            setImagePreview(url);
-        };
-        musicRef.current.onchange = (e) => {
-            setSelectedMusic(e.target.files[0].name);
-            const file = e.target.files[0];
-            const url = URL.createObjectURL(file);
-            setMusicPreview(url);
-        };
-    }, []);
-
+        fileRef.current.onchange = (e) => {
+            setSelected(e.target.files[0].name)
+        }
+    })
     let id = musicDB[musicDB.length - 1].id + 1;
+
+    const handleAddMusic = async () => {
+        const name = document.getElementById("name").value;
+        const artist = document.getElementById("artist").value;
+        const language = document.getElementById("language").value;
+    
+        const data = {
+            src: selected, // Supongo que 'selected' contiene la ruta al archivo de audio seleccionado
+            name,
+            artist,
+            language
+        };
+    
+        // Imprimir el token en consola
+        const token = localStorage.getItem("token");
+        console.log("Token:", token);
+    
+        try {
+            const response = await fetch('http://localhost:3030/api/V3/song/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token // Agrega el token al encabezado
+                },
+                body: JSON.stringify(data)
+            });
+    
+            if (response.ok) {
+                navigate('/home');
+            } else {
+                throw new Error('Error al agregar la canción');
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    
+
 
     return (
         <form style={useStyle.component} className={"AddMusic"}>

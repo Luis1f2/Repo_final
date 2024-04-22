@@ -9,31 +9,27 @@ import SideBarOptions from "../../components/fragment/SideBarOptions/SideBarOpti
 import { PlaylistPlay, Favorite } from "@material-ui/icons";
 
 function Profile() {
-
     const { playlists } = useSelector(state => state.musicReducer);
-    const [favoriteSongs, setFavoriteSongs] = useState([]);
+    const [mostPlayed, setMostPlayed] = useState([]);
 
+    function sortByProperty(property) {
+        return function (a, b) {
+            if (a[property] > b[property])
+                return 1;
+            else if (a[property] < b[property])
+                return -1;
 
+            return 0;
+        }
+    }
 
     useEffect(() => {
-        const storedFavoriteSongs = JSON.parse(localStorage.getItem("favoriteSongs")) || [];
-        const filteredSongs = playlists.filter(song => storedFavoriteSongs.includes(song.id));
-        setFavoriteSongs(filteredSongs);
+        setMostPlayed(playlists.sort(sortByProperty("timesPlayed")));
     }, [playlists]);
-
-
-
 
     useEffect(() => {
         Grade(document.querySelectorAll('.gradient-wrap'))
     });
-
-    const storedUserData = JSON.parse(localStorage.getItem("userData"));
-    const userName = storedUserData ? capitalizeFirstLetter(storedUserData.firstName.split(' ')[0]) : 'Usuario';
-
-    function capitalizeFirstLetter(string) {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    }
 
     return (
         <Container>

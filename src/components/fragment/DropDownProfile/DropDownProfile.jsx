@@ -1,33 +1,29 @@
 import React, { useContext } from "react";
-import '../DropDownProfile/DropDownProfile.scss';
+import './DropDownProfile.scss'; // Simplificado si el CSS está en el mismo directorio
 import { ThemeContext } from "../../../api/Theme";
 import HoverButton from "../HoverButton/HoverButton";
 import { AccountBox, ExitToApp, Delete } from "@material-ui/icons";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // useNavigate es el reemplazo de useHistory en React Router v6
 
 const DropDownProfile = () => {
-    const useStyle = useContext(ThemeContext);
-    const history = useHistory();
+    const style = useContext(ThemeContext); // Renombrado para evitar confusión (useStyle parece un hook)
+    const navigate = useNavigate(); // Actualizado para usar useNavigate
 
     const handleLogout = () => {
-
         localStorage.removeItem("userSession");
-       
-        history.push("/login2");
+        navigate("/login2"); // Actualizado para usar navigate
     };
 
     const handleDeleteAccount = () => {
-      
         localStorage.clear();
-       
-        history.push("/");
+        navigate("/"); // Actualizado para usar navigate
     };
 
     return (
-        <div style={useStyle.component} className="dropdown-profile">
-            <HoverButton Icon={AccountBox} variant={"text"} text={"Profile"} />
-            <HoverButton Icon={ExitToApp} onClick={handleLogout} text={"Cerrar sesión"} />
-            <HoverButton Icon={Delete} onClick={handleDeleteAccount} text={"Eliminar cuenta"} />
+        <div style={style.component} className="dropdown-profile">
+            <HoverButton Icon={AccountBox} variant="text" text="Profile" />
+            <HoverButton Icon={ExitToApp} onClick={handleLogout} text="Cerrar sesión" />
+            <HoverButton Icon={Delete} onClick={handleDeleteAccount} text="Eliminar cuenta" />
         </div>
     );
 };

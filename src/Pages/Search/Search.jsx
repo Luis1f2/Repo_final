@@ -9,19 +9,38 @@ import SearchMusicDisc from "../../assets/img/searchMusicDisc.svg";
 import ArrowUp from '../../assets/img/left.svg';
 
 const Search = () => {
-    const {playlists, search} = useSelector(state => state.musicReducer);
+    const { search } = useSelector(state => state.musicReducer);
     const [searchResult, setSearchResult] = useState([]);
+
     useEffect(() => {
-        setSearchResult(playlists.filter((i) => (
-            (i.name.toLowerCase().startsWith(search))
-            ||
-            (i.author_name.toLowerCase().startsWith(search))
-            ||
-            (i.musicName.toLowerCase().startsWith(search))
-            ||
-            (i.lang && i.lang.toLowerCase().startsWith(search))
-        )));
-    }, [search, playlists]);
+        const fetchData = async () => {
+            try {
+                const response = await fetch(`http://localhost:3030/api/V3/song/find/${encodeURIComponent(search)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-access-token': localStorage.getItem("token")
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setSearchResult(data ? [data] : []);
+                } else {
+                    setSearchResult([]);
+                }
+            } catch (error) {
+                console.error('Error fetching search results:', error);
+                setSearchResult([]);
+            }
+        };
+
+        if (search && search.trim() !== "") {
+            fetchData();
+        } else {
+            setSearchResult([]);
+        }
+    }, [search]);
     return (
         <Container>
             {
